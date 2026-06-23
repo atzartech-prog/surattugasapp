@@ -916,15 +916,6 @@ function generateSingleTaskHtml(task) {
                 Demikian surat tugas ini dibuat untuk dilaksanakan dengan penuh tanggung jawab dan digunakan sebagaimana mestinya.
             </div>
 
-            <!-- Signature Section -->
-            <div class="signature-section">
-                <div class="signature-box">
-                    <div class="sig-date">Jakarta, ${formatDateIndo(task.date)}</div>
-                    <div class="sig-title">${task.picTitle || 'Pemberi Tugas'}</div>
-                    <div class="sig-name">${task.pic}</div>
-                    <div style="font-size: 10pt; margin-top: 2px;">NIP. 19710421 199803 1 001</div>
-                </div>
-            </div>
         </div>
     `;
 }
@@ -1048,18 +1039,12 @@ function compileMonthlyReportHtml(monthlyTasks, month, year) {
                 </tbody>
             </table>
 
-            <div style="display: flex; justify-content: space-between; margin-top: 50px; font-size: 11pt; page-break-inside: avoid;">
-                <div>
-                    <div>Mengetahui,</div>
-                    <div style="font-weight: bold; margin-bottom: 60px;">Kepala Dinas Pendidikan</div>
-                    <div style="font-weight: bold; text-decoration: underline;">Dr. H. Ahmad Fauzi, M.Pd.</div>
-                    <div>NIP. 19720421 199803 1 001</div>
-                </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 50px; font-size: 11pt; page-break-inside: avoid;">
                 <div style="text-align: right;">
                     <div>Jakarta, ${new Date().getDate()} ${indonesianMonths[new Date().getMonth()]} ${new Date().getFullYear()}</div>
                     <div style="font-weight: bold; margin-bottom: 60px; padding-right: 30px;">Pengelola Data Kepegawaian</div>
-                    <div style="font-weight: bold; text-decoration: underline; padding-right: 30px;">Admin TugasKu</div>
-                    <div style="padding-right: 30px;">ID Staff: 2026-TUGASKU</div>
+                    <div style="font-weight: bold; text-decoration: underline; padding-right: 30px;">Admin Ajuan ST</div>
+                    <div style="padding-right: 30px;">ID Staff: 2026-AJUANST</div>
                 </div>
             </div>
         </div>

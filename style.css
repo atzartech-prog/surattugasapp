@@ -1181,6 +1181,7 @@ body {
         background-color: white !important;
         color: black !important;
         font-size: 12pt;
+        margin: 1.6cm 2cm !important;
     }
     
     .no-print,
@@ -1232,7 +1233,7 @@ body {
     
     @page {
         size: A4 portrait;
-        margin: 2cm;
+        margin: 0;
     }
 }
 
