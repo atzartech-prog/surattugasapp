@@ -41,9 +41,13 @@
                     <i class="fa-solid fa-gears"></i>
                     <span>Backup & Data</span>
                 </a>
+                <a href="#" class="nav-item text-danger" id="nav-logout" style="margin-top: auto; border-top: 1px solid var(--border-color); border-radius: 0; padding-top: 15px;">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Keluar (Logout)</span>
+                </a>
             </nav>
             <div class="sidebar-footer">
-                <p>&copy; 2026 TugasKu App</p>
+                <p>Design by siymat 2026</p>
             </div>
         </aside>
 
@@ -56,6 +60,9 @@
                     <p id="page-subtitle">Ringkasan surat tugas dan laporan kegiatan Anda.</p>
                 </div>
                 <div class="header-actions">
+                    <button class="btn btn-outline btn-theme-toggle" id="btn-theme-toggle" title="Ubah Tema" style="padding: 10px; width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-sun" id="theme-icon"></i>
+                    </button>
                     <button class="btn btn-primary" id="btn-add-shortcut">
                         <i class="fa-solid fa-plus"></i> Tambah Surat Tugas
                     </button>
@@ -407,6 +414,33 @@
                     <div id="single-report-content"></div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Login Screen Container -->
+    <div id="login-container" class="login-container no-print" style="display: none;">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fa-solid fa-file-signature login-logo-icon"></i>
+                <h2>Masuk Ke TugasKu</h2>
+                <p>Masukkan kredensial administrator untuk melanjutkan.</p>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" required placeholder="Nama pengguna..." autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required placeholder="Kata sandi..." autocomplete="current-password">
+                </div>
+                <div id="login-error-msg" class="login-error" style="display: none;">
+                    Kredensial tidak valid! Silakan coba lagi.
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px; padding: 12px; font-weight: bold; border-radius: var(--border-radius-md);">
+                    <i class="fa-solid fa-right-to-bracket"></i> Masuk
+                </button>
+            </form>
         </div>
     </div>
 

@@ -1,11 +1,27 @@
 // State Management
 let tasks = [];
 
+// Hash target for verification (SHA-256 of the admin password)
+const AUTH_KEY = "a1dd395c19f3a1f7ff0e6bfe3ee6028e4373b41085a6da776ab02a8baf129abb";
+
 // DOM Elements
 const tabs = document.querySelectorAll('.nav-item');
 const tabContents = document.querySelectorAll('.tab-content');
 const pageTitle = document.getElementById('page-title');
 const pageSubtitle = document.getElementById('page-subtitle');
+
+// Auth DOM Elements
+const loginContainer = document.getElementById('login-container');
+const appContainer = document.querySelector('.app-container');
+const loginForm = document.getElementById('login-form');
+const loginUsername = document.getElementById('login-username');
+const loginPassword = document.getElementById('login-password');
+const loginErrorMsg = document.getElementById('login-error-msg');
+const navLogout = document.getElementById('nav-logout');
+
+// Theme DOM Elements
+const btnThemeToggle = document.getElementById('btn-theme-toggle');
+const themeIcon = document.getElementById('theme-icon');
 
 // Modals & Forms
 const modalTaskForm = document.getElementById('modal-task-form');
@@ -127,6 +143,8 @@ const sampleData = [
 
 // App Initialization
 document.addEventListener('DOMContentLoaded', () => {
+    initAuth();
+    initTheme();
     loadData();
     setupNavigation();
     setupForm();
@@ -136,6 +154,84 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDashboardStats();
     updateStorageInfo();
 });
+
+// Helper: Native SHA-256
+async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Authentication Logic
+function initAuth() {
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+    if (isLoggedIn) {
+        showApp();
+    } else {
+        showLogin();
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = loginUsername.value.trim();
+        const password = loginPassword.value;
+        const hashedInput = await sha256(password);
+
+        if (username === 'admin' && hashedInput === AUTH_KEY) {
+            sessionStorage.setItem('isLoggedIn', 'true');
+            loginErrorMsg.style.display = 'none';
+            loginForm.reset();
+            showApp();
+            updateDashboardStats();
+            updateStorageInfo();
+        } else {
+            loginErrorMsg.style.display = 'block';
+        }
+    });
+
+    navLogout.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (confirm("Apakah Anda yakin ingin keluar dari aplikasi?")) {
+            sessionStorage.removeItem('isLoggedIn');
+            showLogin();
+        }
+    });
+}
+
+function showLogin() {
+    appContainer.style.display = 'none';
+    loginContainer.style.display = 'flex';
+}
+
+function showApp() {
+    loginContainer.style.display = 'none';
+    appContainer.style.display = 'flex';
+}
+
+// Theme Toggle Logic
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        themeIcon.className = 'fa-solid fa-moon';
+    } else {
+        document.body.classList.remove('light-mode');
+        themeIcon.className = 'fa-solid fa-sun';
+    }
+
+    btnThemeToggle.addEventListener('click', () => {
+        if (document.body.classList.contains('light-mode')) {
+            document.body.classList.remove('light-mode');
+            themeIcon.className = 'fa-solid fa-sun';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.body.classList.add('light-mode');
+            themeIcon.className = 'fa-solid fa-moon';
+            localStorage.setItem('theme', 'light');
+        }
+    });
+}
 
 // Load data from LocalStorage
 function loadData() {
@@ -506,14 +602,11 @@ function saveTask() {
         const newMonthYear = new Date(dateVal).getMonth() + '-' + new Date(dateVal).getFullYear();
         
         if (oldMonthYear === newMonthYear && oldTask.no) {
-            // Keep existing number if the date month and year didn't change
             autoNo = oldTask.no;
         } else {
-            // Recalculate number for the new month/year
             autoNo = generateTaskNumber(dateVal, id);
         }
     } else {
-        // Generate automatic number based on month/year
         autoNo = generateTaskNumber(dateVal);
     }
 
@@ -707,7 +800,7 @@ function truncateText(str, n) {
     return (str.length > n) ? str.substr(0, n - 1) + '...' : str;
 }
 
-// Generate document for Individual Letter printing
+// Generate document for Individual Letter printing (NO ASSIGNMENT NUMBER DISPLAYED)
 window.viewSingleTask = function(id) {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
@@ -754,9 +847,9 @@ function generateSingleTaskHtml(task) {
         });
     }
 
-    // Uraian Hasil Kegiatan placed in its own block under details (Uraian Kegiatan taruh di bagian baris/seksi sendiri)
     const activitiesContent = task.activitiesHtml ? task.activitiesHtml : '<p class="text-muted">Belum ada rincian kegiatan yang dilaporkan.</p>';
 
+    // NOTE: Nomor Surat is omitted from printout here (No assignment number displayed)
     return `
         <div class="paper-document">
             <!-- Kop Surat -->
@@ -769,7 +862,6 @@ function generateSingleTaskHtml(task) {
             <!-- Title -->
             <div class="doc-title-box">
                 <div class="doc-title">SURAT TUGAS</div>
-                <div class="doc-number">Nomor: ${task.no || '-'}</div>
             </div>
 
             <!-- Paragraph Intro -->
@@ -812,7 +904,7 @@ function generateSingleTaskHtml(task) {
                 Untuk melaksanakan tugas: <strong>${task.title}</strong> yang terhitung mulai dari tanggal <strong>${formatDateIndo(task.startDate)}</strong> sampai dengan <strong>${formatDateIndo(task.endDate)}</strong>.
             </div>
 
-            <!-- Uraian Hasil Kegiatan (Laporan) - TARUH DI BAGIAN BARIS SENDIRI -->
+            <!-- Uraian Hasil Kegiatan (Laporan) -->
             <div class="doc-section" style="margin-top: 24px; border-top: 1px solid #111; padding-top: 16px; page-break-inside: avoid;">
                 <h3 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">LAPORAN HASIL PELAKSANAAN KEGIATAN:</h3>
                 <div style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: black; text-align: justify;">
@@ -899,13 +991,12 @@ function generateMonthlyReport() {
     };
 }
 
+// NOTE: No. Surat Tugas column has been removed from monthly report table (No assignment number displayed)
 function compileMonthlyReportHtml(monthlyTasks, month, year) {
     let tableRows = '';
     let counter = 1;
 
-    // Group activities of all filtered tasks. Uraian Hasil Kegiatan taruh di bagian baris sendiri.
     monthlyTasks.forEach(task => {
-        // Compile executors listing format
         let execCell = '';
         if (task.executors && task.executors.length > 0) {
             task.executors.forEach((e, i) => {
@@ -917,20 +1008,17 @@ function compileMonthlyReportHtml(monthlyTasks, month, year) {
 
         const activitiesContent = task.activitiesHtml ? task.activitiesHtml : '<em style="color:#666;">Belum melaporkan rincian hasil kegiatan.</em>';
 
-        // Row 1: Task Details
         tableRows += `
             <tr>
                 <td style="text-align: center; vertical-align: top; font-weight: bold; border-bottom: none !important;">${counter++}</td>
-                <td style="vertical-align: top; font-weight: bold; border-bottom: none !important;">${task.no || '-'}</td>
                 <td style="vertical-align: top; border-bottom: none !important;">${task.title}</td>
                 <td style="vertical-align: top; border-bottom: none !important;">${execCell}</td>
                 <td style="text-align: center; vertical-align: top; border-bottom: none !important; font-size: 9.5pt;">
                     ${formatDateIndo(task.startDate)}<br>s/d<br>${formatDateIndo(task.endDate)}
                 </td>
             </tr>
-            <!-- Row 2: Uraian Kegiatan (Baris khusus sendiri agar tidak merusak tampilan PDF) -->
             <tr>
-                <td colspan="5" class="report-detail-row">
+                <td colspan="4" class="report-detail-row">
                     <strong>Uraian Hasil Laporan Kegiatan:</strong>
                     <div>${activitiesContent}</div>
                 </td>
@@ -950,7 +1038,6 @@ function compileMonthlyReportHtml(monthlyTasks, month, year) {
                 <thead>
                     <tr>
                         <th style="width: 40px;">No</th>
-                        <th style="width: 120px;">No. Surat Tugas</th>
                         <th>Judul / Tugas Mandat</th>
                         <th>Daftar Pelaksana & Peran</th>
                         <th style="width: 140px;">Masa Tugas</th>
@@ -1013,7 +1100,6 @@ function setupBackupRestore() {
                     if (confirm(`Apakah Anda yakin ingin memulihkan cadangan? Ini akan menggantikan ${tasks.length} data saat ini dengan ${importedData.length} data cadangan.`)) {
                         tasks = importedData;
                         
-                        // Migration checking for imported files too
                         tasks.forEach(t => {
                             if (t.executor) {
                                 t.executors = [{ name: t.executor, role: "Pelaksana", nip: t.executorNip || "" }];
