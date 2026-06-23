@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Surat Tugas & Laporan Kegiatan</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- App Container -->
+    <div class="app-container no-print">
+        <!-- Sidebar / Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fa-solid fa-file-signature"></i>
+                    <span>TugasKu</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="surat-tugas">
+                    <i class="fa-solid fa-briefcase"></i>
+                    <span>Surat Tugas</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="laporan">
+                    <i class="fa-solid fa-print"></i>
+                    <span>Cetak Laporan</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="pengaturan">
+                    <i class="fa-solid fa-gears"></i>
+                    <span>Backup & Data</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <p>&copy; 2026 TugasKu App</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="content-header">
+                <div class="header-title">
+                    <h1 id="page-title">Dashboard</h1>
+                    <p id="page-subtitle">Ringkasan surat tugas dan laporan kegiatan Anda.</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="btn-add-shortcut">
+                        <i class="fa-solid fa-plus"></i> Tambah Surat Tugas
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Tab -->
+            <section id="tab-dashboard" class="tab-content active">
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="fa-solid fa-briefcase"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stat-total">0</h3>
+                            <p>Total Surat Tugas</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stat-selesai">0</h3>
+                            <p>Tugas Selesai</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stat-aktif">0</h3>
+                            <p>Tugas Aktif</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activities Section -->
+                <div class="section-card">
+                    <div class="card-header">
+                        <h2>Surat Tugas Terbaru</h2>
+                        <a href="#" class="card-action-link" id="link-view-all">Lihat Semua</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>No. Surat</th>
+                                    <th>Judul Tugas</th>
+                                    <th>Pelaksana</th>
+                                    <th>Periode</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-tasks-list">
+                                <!-- Data will be loaded via JS -->
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">Belum ada data surat tugas.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Surat Tugas Tab -->
+            <section id="tab-surat-tugas" class="tab-content">
+                <div class="filter-bar">
+                    <div class="search-input">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="search-task" placeholder="Cari judul, pelaksana, atau nomor surat...">
+                    </div>
+                    <div class="filter-actions">
+                        <select id="filter-status">
+                            <option value="all">Semua Status</option>
+                            <option value="aktif">Aktif</option>
+                            <option value="selesai">Selesai</option>
+                        </select>
+                        <select id="filter-month-year">
+                            <option value="all">Semua Bulan</option>
+                            <!-- Dynamically generated -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="tasks-grid" id="tasks-container">
+                    <!-- Task Cards will be loaded via JS -->
+                </div>
+            </section>
+
+            <!-- Laporan Tab (Monthly Print/Export) -->
+            <section id="tab-laporan" class="tab-content">
+                <div class="section-card">
+                    <div class="card-header">
+                        <h2>Cetak Laporan Bulanan</h2>
+                        <p class="text-muted">Pilih bulan dan tahun untuk menghasilkan rekapitulasi laporan kegiatan.</p>
+                    </div>
+                    <div class="report-filter-form">
+                        <div class="form-group-row">
+                            <div class="form-group">
+                                <label for="report-month">Pilih Bulan</label>
+                                <select id="report-month" class="form-control">
+                                    <option value="1">Januari</option>
+                                    <option value="2">Februari</option>
+                                    <option value="3">Maret</option>
+                                    <option value="4">April</option>
+                                    <option value="5">Mei</option>
+                                    <option value="6">Juni</option>
+                                    <option value="7">Juli</option>
+                                    <option value="8">Agustus</option>
+                                    <option value="9">September</option>
+                                    <option value="10">Oktober</option>
+                                    <option value="11">November</option>
+                                    <option value="12">Desember</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="report-year">Pilih Tahun</label>
+                                <select id="report-year" class="form-control">
+                                    <!-- Options generated by JS -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-actions mt-3">
+                            <button class="btn btn-primary" id="btn-generate-report">
+                                <i class="fa-solid fa-arrows-spin"></i> Tampilkan Laporan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Area -->
+                <div class="section-card mt-4" id="report-preview-container" style="display: none;">
+                    <div class="card-header border-bottom">
+                        <h2>Pratinjau Laporan</h2>
+                        <button class="btn btn-success" id="btn-print-monthly">
+                            <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
+                        </button>
+                    </div>
+                    <div class="report-paper-preview">
+                        <!-- HTML printable monthly report will be compiled here -->
+                        <div id="monthly-report-content"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings/Backup Tab -->
+            <section id="tab-pengaturan" class="tab-content">
+                <div class="grid-2-col">
+                    <!-- Backup & Restore -->
+                    <div class="section-card">
+                        <div class="card-header border-bottom">
+                            <h2>Backup & Restore</h2>
+                            <p class="text-muted">Ekspor data Anda ke file atau impor data cadangan eksternal.</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="backup-action-box">
+                                <div class="action-icon">
+                                    <i class="fa-solid fa-file-export text-blue"></i>
+                                </div>
+                                <div class="action-desc">
+                                    <h3>Ekspor Data (Backup)</h3>
+                                    <p>Simpan semua data surat tugas Anda menjadi file .json untuk disimpan di penyimpanan HP.</p>
+                                    <button class="btn btn-outline-primary mt-2" id="btn-export">
+                                        <i class="fa-solid fa-download"></i> Ekspor ke JSON
+                                    </button>
+                                </div>
+                            </div>
+                            <hr class="divider">
+                            <div class="backup-action-box">
+                                <div class="action-icon">
+                                    <i class="fa-solid fa-file-import text-green"></i>
+                                </div>
+                                <div class="action-desc">
+                                    <h3>Impor Data (Restore)</h3>
+                                    <p>Pilih file cadangan JSON untuk memulihkan atau memuat data surat tugas lama.</p>
+                                    <div class="file-upload-wrapper mt-2">
+                                        <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                                        <button class="btn btn-outline-success" id="btn-trigger-import">
+                                            <i class="fa-solid fa-upload"></i> Pilih File & Impor
+                                        </button>
+                                    </div>
+                                    <p class="text-warning mt-1 text-xs"><i class="fa-solid fa-triangle-exclamation"></i> Mengimpor data baru akan menimpa data yang saat ini ada.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Application Info & Reset -->
+                    <div class="section-card">
+                        <div class="card-header border-bottom">
+                            <h2>Informasi & Manajemen Data</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-list">
+                                <div class="info-item">
+                                    <span>Penyimpanan Terpakai:</span>
+                                    <strong id="info-storage-used">0 KB</strong>
+                                </div>
+                                <div class="info-item">
+                                    <span>Jumlah Rekaman:</span>
+                                    <strong id="info-total-records">0 item</strong>
+                                </div>
+                                <div class="info-item">
+                                    <span>Lokasi Penyimpanan Local:</span>
+                                    <strong>Browser LocalStorage</strong>
+                                </div>
+                            </div>
+                            <hr class="divider">
+                            <div class="danger-zone">
+                                <h3>Zona Bahaya</h3>
+                                <p class="text-muted">Tindakan berikut bersifat permanen dan tidak dapat dibatalkan.</p>
+                                <button class="btn btn-danger mt-2" id="btn-clear-data">
+                                    <i class="fa-solid fa-trash-can"></i> Hapus Semua Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal Form (Add / Edit Surat Tugas) -->
+    <div class="modal-overlay no-print" id="modal-task-form">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 id="modal-title">Tambah Surat Tugas Baru</h2>
+                <button class="modal-close" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="task-form">
+                <input type="hidden" id="task-id">
+                <div class="modal-body">
+                    <!-- Basic Info Row -->
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="task-no" class="required">Nomor Surat Tugas</label>
+                            <input type="text" id="task-no" required placeholder="Contoh: 800/123/DISDIK/2026">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="task-date" class="required">Tanggal Surat Tugas</label>
+                            <input type="date" id="task-date" required>
+                        </div>
+                    </div>
+
+                    <!-- Judul Tugas -->
+                    <div class="form-group">
+                        <label for="task-title" class="required">Judul / Perihal Surat Tugas</label>
+                        <input type="text" id="task-title" required placeholder="Contoh: Pendampingan Akreditasi Sekolah">
+                    </div>
+
+                    <!-- PIC & Pelaksana Row -->
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="task-pic" class="required">Nama PIC (Pemberi Tugas)</label>
+                            <input type="text" id="task-pic" required placeholder="Contoh: Dr. H. Ahmad Fauzi, M.Pd.">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="task-pic-title">Jabatan PIC</label>
+                            <input type="text" id="task-pic-title" placeholder="Contoh: Kepala Dinas Pendidikan">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="task-executor" class="required">Nama Pelaksana Tugas</label>
+                            <input type="text" id="task-executor" required placeholder="Contoh: Budi Santoso, S.Kom.">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="task-executor-nip">NIP / ID Pelaksana (Opsional)</label>
+                            <input type="text" id="task-executor-nip" placeholder="Contoh: 19881023 201504 1 002">
+                        </div>
+                    </div>
+
+                    <!-- Periode Row -->
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="task-start-date" class="required">Tanggal Mulai</label>
+                            <input type="date" id="task-start-date" required>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="task-end-date" class="required">Tanggal Selesai</label>
+                            <input type="date" id="task-end-date" required>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="form-group">
+                        <label for="task-status">Status Tugas</label>
+                        <select id="task-status" class="form-control">
+                            <option value="aktif">Aktif (Dalam Proses)</option>
+                            <option value="selesai">Selesai</option>
+                        </select>
+                    </div>
+
+                    <!-- Uraian Kegiatan (Laporan) -->
+                    <div class="form-group">
+                        <div class="label-with-action">
+                            <label>Uraian Kegiatan (Untuk Laporan)</label>
+                            <button type="button" class="btn-text" id="btn-add-activity-row">
+                                <i class="fa-solid fa-plus-circle"></i> Tambah Baris Kegiatan
+                            </button>
+                        </div>
+                        <div class="activities-input-list" id="activities-list-container">
+                            <!-- Dynamic rows of activity inputs will go here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="btn-cancel-modal">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-task">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal View / Print Individual Surat Tugas -->
+    <div class="modal-overlay no-print" id="modal-view-task">
+        <div class="modal-container modal-lg">
+            <div class="modal-header">
+                <h2>Pratinjau Surat Tugas & Laporan</h2>
+                <div class="header-preview-actions">
+                    <button class="btn btn-success btn-sm" id="btn-print-single">
+                        <i class="fa-solid fa-print"></i> Cetak / PDF
+                    </button>
+                    <button class="modal-close" id="btn-close-view"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div class="modal-body paper-container">
+                <div class="report-paper-preview">
+                    <!-- Individual letter layout compiled here -->
+                    <div id="single-report-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINT SECTION (Only visible during print mode) -->
+    <div class="print-only-container" id="print-area">
+        <!-- Rendered print contents will be injected here before print window triggers -->
+    </div>
+
+    <!-- JavaScript logic -->
+    <script src="app.js"></script>
+</body>
+</html>
