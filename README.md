@@ -1,31 +1,32 @@
 # 📝 Aplikasi Surat Tugas & Laporan Kegiatan (TugasKu)
 
-Aplikasi berbasis web sederhana namun premium untuk mengelola data **Surat Tugas**, mencatat **Laporan Deskripsi Kegiatan**, dan mengekspor rekapitulasi bulanan ke format cetak atau PDF yang siap dibagikan.
+Aplikasi berbasis web sederhana namun premium untuk mengelola data **Surat Tugas**, mencatat **Laporan Hasil Kegiatan** dengan editor kaya teks (Rich-Text), dan mengekspor rekapitulasi bulanan ke format cetak atau PDF yang siap dibagikan.
 
 Aplikasi ini berjalan sepenuhnya di sisi klien (Client-side) dan menggunakan **LocalStorage** peramban sebagai database lokal sehingga tidak memerlukan instalasi server database eksternal.
 
 ---
 
-## ✨ Fitur Utama
+## ✨ Fitur Utama yang Diperbarui
 
-- **Dashboard Statistik**: Memantau jumlah total surat tugas, tugas aktif, dan tugas selesai secara real-time.
-- **Manajemen Surat Tugas (CRUD)**:
-  - Input Nomor Surat Tugas resmi.
-  - Judul / Perihal penugasan.
-  - Informasi Pemberi Tugas (PIC) & Jabatan.
-  - Informasi Penerima Tugas (Pelaksana) & NIP/ID.
-  - Tanggal Pembuatan Surat & Periode Pelaksanaan (Tanggal Mulai s.d Selesai).
-  - Penentuan status tugas (Aktif / Selesai).
-- **Uraian Laporan Kegiatan Dinamis**: Form pembuatan surat tugas dilengkapi dengan penambahan baris aktivitas laporan kegiatan secara dinamis dan interaktif.
-- **Pratinjau Kertas Resmi**:
-  - Halaman pratinjau dokumen individual menggunakan layout Kop Surat resmi instansi pemerintahan, kolom tanda tangan (Signature block), dan tabel deskripsi kegiatan.
-- **Cetak Laporan Bulanan**:
-  - Menyusun seluruh daftar tugas dalam satu bulan ke dalam tabel rekapitulasi terpadu untuk ditandatangani.
-  - Mendukung cetak langsung ke printer fisik atau simpan sebagai berkas **PDF** (menggunakan dialog cetak browser).
+- **Pemberian Nomor Otomatis**:
+  - Input manual Nomor Surat Tugas dihapus.
+  - Nomor surat dihitung secara otomatis berdasarkan bulan dan tahun tugas, dengan format resmi: `[No. Urut]/ST/[Bulan Romawi]/[Tahun]` (contoh: `1/ST/VI/2026`).
+- **Pelaksana Tugas Multi & Peran Berbeda**:
+  - Mendukung input banyak pelaksana tugas untuk setiap satu surat tugas.
+  - Setiap pelaksana memiliki kolom **Nama**, **Peran/Jabatan** yang berbeda, serta **NIP/ID** masing-masing.
+- **Fitur Salin Pelaksana**:
+  - Tombol **Salin dari ST Lain** untuk menduplikasi daftar pelaksana dari surat tugas yang telah dibuat sebelumnya untuk menghemat waktu pengetikan.
+- **Rich-Text Editor untuk Laporan**:
+  - Uraian kegiatan diinput melalui editor kaya teks (WYSIWYG sederhana) yang mendukung pemformatan:
+    - **Tebal (Bold)**, *Miring (Italic)*, <u>Garis Bawah (Underline)</u>.
+    - Judul/Header (H1 & H2).
+    - Daftar Bulatan (Unordered List) & Daftar Angka (Ordered List).
+- **Tata Letak Cetak Teroptimasi (PDF/Kertas)**:
+  - **Pratinjau Surat Tugas**: Uraian kegiatan diletakkan pada seksi khusus di bawah detail surat sehingga teks panjang tidak merusak tata letak cetak.
+  - **Rekap Bulanan**: Kolom laporan dilepas dari kolom tabel samping dan diletakkan pada **baris penuh (colspan) khusus** tepat di bawah baris metadata surat tugas, memastikan berkas PDF tetap rapi dan mudah dibaca.
 - **Backup & Restore**:
-  - **Ekspor**: Mengunduh seluruh data dalam format `.json` untuk dicadangkan di penyimpanan HP.
-  - **Impor**: Memulihkan database lama dengan mengunggah file `.json` cadangan.
-  - **Hapus Semua**: Opsi pembersihan database lokal.
+  - Ekspor/Unduh basis data ke file `.json`.
+  - Impor/Pulihkan basis data dari file `.json` lama.
 
 ---
 
@@ -33,7 +34,7 @@ Aplikasi ini berjalan sepenuhnya di sisi klien (Client-side) dan menggunakan **L
 
 1. **HTML5**: Struktur halaman semantik.
 2. **CSS3 (Vanilla)**: Tampilan antarmuka modern bernuansa gelap (slate/indigo theme), transisi interaktif, dan stylesheet khusus cetak (`@media print`).
-3. **Vanilla JS**: Logika CRUD, interaksi DOM, penyimpanan lokal, impor/ekspor file cadangan, serta filter data.
+3. **Vanilla JS**: Logika CRUD, interaksi DOM, penyimpanan lokal, generator nomor otomatis, editor teks kaya berbasis `contenteditable`, serta penanganan ekspor/impor data.
 4. **Font & Icon**: Google Fonts (Plus Jakarta Sans) & FontAwesome Icons.
 
 ---
@@ -66,11 +67,3 @@ Metode ini paling direkomendasikan karena mencegah batasan keamanan browser pada
 1. Buka **File Manager** bawaan HP Android Anda.
 2. Cari penyimpanan internal, lalu buka folder **`SuratTugasApp`**.
 3. Ketuk berkas **`index.html`** dan pilih buka menggunakan browser (seperti Google Chrome atau Firefox).
-
----
-
-## 🖨️ Panduan Menyimpan Dokumen ke PDF
-1. Pada pratinjau dokumen surat tugas atau laporan bulanan, klik tombol **Cetak / PDF**.
-2. Pada setelan printer yang muncul di browser HP, ubah pilihan printer menjadi **Simpan sebagai PDF (Save as PDF)**.
-3. Atur ukuran kertas ke **A4** dan orientasi **Potret (Portrait)**.
-4. Klik tombol simpan untuk mengunduh berkas PDF yang siap dibagikan ke WhatsApp, Email, atau platform komunikasi lainnya.
