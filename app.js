@@ -7,7 +7,7 @@ const tabContents = document.querySelectorAll('.tab-content');
 const pageTitle = document.getElementById('page-title');
 const pageSubtitle = document.getElementById('page-subtitle');
 
-// Modals
+// Modals & Forms
 const modalTaskForm = document.getElementById('modal-task-form');
 const modalViewTask = document.getElementById('modal-view-task');
 const formTask = document.getElementById('task-form');
@@ -18,18 +18,25 @@ const btnAddShortcut = document.getElementById('btn-add-shortcut');
 
 // Inputs
 const inputTaskId = document.getElementById('task-id');
-const inputTaskNo = document.getElementById('task-no');
 const inputTaskDate = document.getElementById('task-date');
 const inputTaskTitle = document.getElementById('task-title');
 const inputTaskPic = document.getElementById('task-pic');
 const inputTaskPicTitle = document.getElementById('task-pic-title');
-const inputTaskExecutor = document.getElementById('task-executor');
-const inputTaskExecutorNip = document.getElementById('task-executor-nip');
 const inputTaskStartDate = document.getElementById('task-start-date');
 const inputTaskEndDate = document.getElementById('task-end-date');
 const inputTaskStatus = document.getElementById('task-status');
-const activitiesContainer = document.getElementById('activities-list-container');
-const btnAddActivityRow = document.getElementById('btn-add-activity-row');
+
+// Multiple Executors DOM elements
+const executorsContainer = document.getElementById('executors-list-container');
+const btnAddExecutorRow = document.getElementById('btn-add-executor-row');
+const btnCopyExecutors = document.getElementById('btn-copy-executors');
+const copyExecutorsWrapper = document.getElementById('copy-executors-wrapper');
+const selectCopySource = document.getElementById('select-copy-source');
+const btnExecuteCopy = document.getElementById('btn-execute-copy');
+
+// Rich Editor DOM elements
+const activitiesEditor = document.getElementById('task-activities-editor');
+const editorButtons = document.querySelectorAll('.editor-btn');
 
 // Filters
 const searchInput = document.getElementById('search-task');
@@ -70,43 +77,51 @@ const indonesianMonths = [
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
 ];
 
+// Roman Numerals for Month
+const romanMonths = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+
 // Sample Initial Data
 const sampleData = [
     {
         id: "ts-1",
-        no: "094/012/ST/VI/2026",
+        no: "1/ST/VI/2026",
         title: "Monitoring dan Evaluasi Pembelajaran Kelas Digital di SMA Negeri 1",
         date: "2026-06-15",
         pic: "Dr. H. Ahmad Fauzi, M.Pd.",
         picTitle: "Kepala Dinas Pendidikan",
-        executor: "Budi Santoso, S.Kom.",
-        executorNip: "19881023 201504 1 002",
+        executors: [
+            { name: "Budi Santoso, S.Kom.", role: "Pelaksana Utama / IT Specialist", nip: "19881023 201504 1 002" },
+            { name: "Siti Rahma, S.Pd.", role: "Evaluator Akademik", nip: "19900214 201803 2 003" }
+        ],
         startDate: "2026-06-16",
         endDate: "2026-06-18",
         status: "selesai",
-        activities: [
-            { text: "Melakukan koordinasi dengan Kepala Sekolah SMA Negeri 1." },
-            { text: "Mengobservasi kegiatan belajar mengajar di 3 laboratorium komputer." },
-            { text: "Mengecek kelayakan infrastruktur server dan wifi sekolah." },
-            { text: "Memberikan bimbingan teknis penggunaan platform e-learning kepada guru." }
-        ]
+        activitiesHtml: `<p>Laporan hasil pelaksanaan kegiatan monitoring kelas digital:</p>
+<ul>
+  <li>Melakukan koordinasi dengan Kepala Sekolah SMA Negeri 1 berkaitan dengan integrasi kelas digital.</li>
+  <li>Mengobservasi kegiatan belajar mengajar di 3 laboratorium komputer sekolah.</li>
+  <li>Mengecek kelayakan infrastruktur server lokal, router, dan ketersediaan wifi sekolah.</li>
+  <li>Memberikan bimbingan teknis penggunaan platform e-learning kepada guru mata pelajaran.</li>
+</ul>`
     },
     {
         id: "ts-2",
-        no: "094/015/ST/VI/2026",
+        no: "2/ST/VI/2026",
         title: "Sosialisasi Keamanan Informasi dan Data Instansi Pemerintah",
         date: "2026-06-20",
         pic: "Dr. H. Ahmad Fauzi, M.Pd.",
         picTitle: "Kepala Dinas Pendidikan",
-        executor: "Ahmad Subari, M.T.",
-        executorNip: "19850112 201012 1 001",
+        executors: [
+            { name: "Ahmad Subari, M.T.", role: "Pemateri / Keamanan Siber", nip: "19850112 201012 1 001" }
+        ],
         startDate: "2026-06-24",
         endDate: "2026-06-26",
         status: "aktif",
-        activities: [
-            { text: "Mempersiapkan materi sosialisasi keamanan siber." },
-            { text: "Melakukan sosialisasi di Aula Kantor Wilayah." }
-        ]
+        activitiesHtml: `<p>Persiapan dan tahapan sosialisasi keamanan informasi:</p>
+<ol>
+  <li>Mempersiapkan materi sosialisasi keamanan siber dan perlindungan data pribadi.</li>
+  <li>Melakukan sosialisasi di Aula Kantor Wilayah.</li>
+</ol>`
     }
 ];
 
@@ -128,13 +143,36 @@ function loadData() {
     if (localData) {
         try {
             tasks = JSON.parse(localData);
+            
+            // Migration check: convert old format task data if found
+            let migrated = false;
+            tasks.forEach(t => {
+                if (t.executor) {
+                    t.executors = [{ name: t.executor, role: "Pelaksana", nip: t.executorNip || "" }];
+                    delete t.executor;
+                    delete t.executorNip;
+                    migrated = true;
+                }
+                if (t.activities && !t.activitiesHtml) {
+                    let html = "<ul>";
+                    t.activities.forEach(act => {
+                        html += `<li>${act.text}</li>`;
+                    });
+                    html += "</ul>";
+                    t.activitiesHtml = html;
+                    delete t.activities;
+                    migrated = true;
+                }
+            });
+            if (migrated) saveToStorage();
+
         } catch (e) {
             console.error("Error parsing localStorage data, loading sample data instead.", e);
-            tasks = [...sampleData];
+            tasks = JSON.parse(JSON.stringify(sampleData));
             saveToStorage();
         }
     } else {
-        tasks = [...sampleData];
+        tasks = JSON.parse(JSON.stringify(sampleData));
         saveToStorage();
     }
 }
@@ -242,10 +280,11 @@ function updateDashboardStats() {
 
     sortedTasks.forEach(task => {
         const tr = document.createElement('tr');
+        const execNames = task.executors ? task.executors.map(e => e.name).join(', ') : '-';
         tr.innerHTML = `
-            <td><strong>${task.no}</strong></td>
-            <td>${truncateText(task.title, 40)}</td>
-            <td>${task.executor}</td>
+            <td><strong>${task.no || '-'}</strong></td>
+            <td>${truncateText(task.title, 35)}</td>
+            <td>${truncateText(execNames, 30)}</td>
             <td><span class="text-xs">${formatDateIndo(task.startDate)} - ${formatDateIndo(task.endDate)}</span></td>
             <td>
                 <span class="badge ${task.status === 'selesai' ? 'badge-green' : 'badge-blue'}">
@@ -267,6 +306,30 @@ function updateDashboardStats() {
     });
 }
 
+// Helper to compile Roman Numerals for months
+function getRomanMonth(monthNum) {
+    return romanMonths[monthNum - 1] || monthNum;
+}
+
+// Auto-Numbering Generator
+function generateTaskNumber(dateStr, taskId = null) {
+    if (!dateStr) return '';
+    const taskDateObj = new Date(dateStr);
+    const month = taskDateObj.getMonth() + 1;
+    const year = taskDateObj.getFullYear();
+    
+    // Filter tasks that occur in the same month and year (excluding this current task if it is an edit)
+    const siblings = tasks.filter(t => {
+        if (taskId && t.id === taskId) return false;
+        const d = new Date(t.date);
+        return (d.getMonth() + 1) === month && d.getFullYear() === year;
+    });
+
+    const index = siblings.length + 1;
+    const roman = getRomanMonth(month);
+    return `${index}/ST/${roman}/${year}`;
+}
+
 // Setup Form, Add & Edit logic
 function setupForm() {
     // Shortcuts to Add Modal
@@ -280,8 +343,48 @@ function setupForm() {
         if (e.target === modalViewTask) closeModal();
     });
 
-    // Add Activity Row
-    btnAddActivityRow.addEventListener('click', () => addActivityRow());
+    // Add Executor Row
+    btnAddExecutorRow.addEventListener('click', () => addExecutorRow());
+
+    // Toggle Copy executors dropdown wrapper
+    btnCopyExecutors.addEventListener('click', () => {
+        if (copyExecutorsWrapper.style.display === 'none') {
+            populateCopySourceOptions();
+            copyExecutorsWrapper.style.display = 'block';
+        } else {
+            copyExecutorsWrapper.style.display = 'none';
+        }
+    });
+
+    // Execute Copy executors
+    btnExecuteCopy.addEventListener('click', () => {
+        const sourceTaskId = selectCopySource.value;
+        if (!sourceTaskId) {
+            alert('Pilih surat tugas sumber terlebih dahulu.');
+            return;
+        }
+        const sourceTask = tasks.find(t => t.id === sourceTaskId);
+        if (sourceTask && sourceTask.executors && sourceTask.executors.length > 0) {
+            executorsContainer.innerHTML = '';
+            sourceTask.executors.forEach(exec => {
+                addExecutorRow(exec.name, exec.role, exec.nip);
+            });
+            copyExecutorsWrapper.style.display = 'none';
+        } else {
+            alert('Surat tugas sumber tidak memiliki data pelaksana.');
+        }
+    });
+
+    // Setup Rich Text Editor toolbar formatting events
+    editorButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const cmd = btn.getAttribute('data-cmd');
+            const val = btn.getAttribute('data-val') || null;
+            document.execCommand(cmd, false, val);
+            activitiesEditor.focus();
+        });
+    });
 
     // Submit Form
     formTask.addEventListener('submit', (e) => {
@@ -290,31 +393,50 @@ function setupForm() {
     });
 }
 
+// Populate the Copy dropdown with available tasks
+function populateCopySourceOptions() {
+    selectCopySource.innerHTML = '<option value="">-- Pilih Surat Tugas --</option>';
+    
+    // Sort reverse chronological
+    const sorted = [...tasks].sort((a,b) => new Date(b.date) - new Date(a.date));
+    
+    sorted.forEach(t => {
+        const execNames = t.executors ? t.executors.map(e => e.name).join(', ') : '-';
+        const label = `${t.no || 'Tanpa No.'} - ${truncateText(t.title, 30)} (${truncateText(execNames, 20)})`;
+        const option = document.createElement('option');
+        option.value = t.id;
+        option.innerText = label;
+        selectCopySource.appendChild(option);
+    });
+}
+
 function openTaskFormModal(task = null) {
     formTask.reset();
-    activitiesContainer.innerHTML = '';
+    executorsContainer.innerHTML = '';
+    activitiesEditor.innerHTML = '';
+    copyExecutorsWrapper.style.display = 'none';
     
     if (task) {
         // Edit Mode
         document.getElementById('modal-title').innerText = "Edit Surat Tugas";
         inputTaskId.value = task.id;
-        inputTaskNo.value = task.no;
         inputTaskDate.value = task.date;
         inputTaskTitle.value = task.title;
         inputTaskPic.value = task.pic;
         inputTaskPicTitle.value = task.picTitle || '';
-        inputTaskExecutor.value = task.executor;
-        inputTaskExecutorNip.value = task.executorNip || '';
         inputTaskStartDate.value = task.startDate;
         inputTaskEndDate.value = task.endDate;
         inputTaskStatus.value = task.status;
 
-        // Load activities
-        if (task.activities && task.activities.length > 0) {
-            task.activities.forEach(act => addActivityRow(act.text));
+        // Load executors
+        if (task.executors && task.executors.length > 0) {
+            task.executors.forEach(exec => addExecutorRow(exec.name, exec.role, exec.nip));
         } else {
-            addActivityRow(); // default one row
+            addExecutorRow(); // default one empty row
         }
+
+        // Load activities HTML
+        activitiesEditor.innerHTML = task.activitiesHtml || '';
     } else {
         // New Mode
         document.getElementById('modal-title').innerText = "Tambah Surat Tugas Baru";
@@ -322,28 +444,31 @@ function openTaskFormModal(task = null) {
         inputTaskDate.value = new Date().toISOString().substring(0, 10);
         inputTaskStartDate.value = new Date().toISOString().substring(0, 10);
         inputTaskEndDate.value = new Date().toISOString().substring(0, 10);
-        addActivityRow(); // default one row
+        addExecutorRow(); // default one row
+        activitiesEditor.innerHTML = '';
     }
     
     modalTaskForm.classList.add('active');
 }
 
-function addActivityRow(val = '') {
+function addExecutorRow(name = '', role = '', nip = '') {
     const div = document.createElement('div');
-    div.className = 'activity-input-row';
+    div.className = 'executor-input-row';
     div.innerHTML = `
-        <input type="text" class="form-control activity-item" required placeholder="Uraian kegiatan..." value="${val}">
-        <button type="button" class="action-btn btn-delete remove-activity-row" title="Hapus Baris">
+        <input type="text" class="form-control executor-name" required placeholder="Nama Pelaksana" value="${name}">
+        <input type="text" class="form-control executor-role" placeholder="Peran/Jabatan" value="${role}">
+        <input type="text" class="form-control executor-nip" placeholder="NIP/ID (Opsional)" value="${nip}">
+        <button type="button" class="action-btn btn-delete remove-executor-row" title="Hapus Pelaksana">
             <i class="fa-solid fa-trash"></i>
         </button>
     `;
     
     // Bind deletion click
-    div.querySelector('.remove-activity-row').addEventListener('click', () => {
+    div.querySelector('.remove-executor-row').addEventListener('click', () => {
         div.remove();
     });
     
-    activitiesContainer.appendChild(div);
+    executorsContainer.appendChild(div);
 }
 
 function closeModal() {
@@ -353,34 +478,62 @@ function closeModal() {
 
 function saveTask() {
     const id = inputTaskId.value || 'ts-' + Date.now();
+    const dateVal = inputTaskDate.value;
     
-    // Get all activity input values
-    const activityInputs = document.querySelectorAll('.activity-item');
-    const activities = Array.from(activityInputs)
-        .map(input => ({ text: input.value.trim() }))
-        .filter(act => act.text !== '');
+    // Collect executors
+    const executorRows = executorsContainer.querySelectorAll('.executor-input-row');
+    const executors = Array.from(executorRows).map(row => ({
+        name: row.querySelector('.executor-name').value.trim(),
+        role: row.querySelector('.executor-role').value.trim() || 'Pelaksana',
+        nip: row.querySelector('.executor-nip').value.trim()
+    })).filter(exec => exec.name !== '');
+
+    if (executors.length === 0) {
+        alert("Wajib menambahkan minimal 1 pelaksana tugas.");
+        return;
+    }
+
+    // Get HTML from contenteditable editor
+    const activitiesHtml = activitiesEditor.innerHTML.trim();
+
+    // Check if task exists to determine if we should generate a new number or recalculate
+    const existingIndex = tasks.findIndex(t => t.id === id);
+    let autoNo = '';
+
+    if (existingIndex > -1) {
+        const oldTask = tasks[existingIndex];
+        const oldMonthYear = new Date(oldTask.date).getMonth() + '-' + new Date(oldTask.date).getFullYear();
+        const newMonthYear = new Date(dateVal).getMonth() + '-' + new Date(dateVal).getFullYear();
+        
+        if (oldMonthYear === newMonthYear && oldTask.no) {
+            // Keep existing number if the date month and year didn't change
+            autoNo = oldTask.no;
+        } else {
+            // Recalculate number for the new month/year
+            autoNo = generateTaskNumber(dateVal, id);
+        }
+    } else {
+        // Generate automatic number based on month/year
+        autoNo = generateTaskNumber(dateVal);
+    }
 
     const taskData = {
         id,
-        no: inputTaskNo.value,
-        date: inputTaskDate.value,
+        no: autoNo,
+        date: dateVal,
         title: inputTaskTitle.value,
         pic: inputTaskPic.value,
         picTitle: inputTaskPicTitle.value,
-        executor: inputTaskExecutor.value,
-        executorNip: inputTaskExecutorNip.value,
         startDate: inputTaskStartDate.value,
         endDate: inputTaskEndDate.value,
         status: inputTaskStatus.value,
-        activities
+        executors,
+        activitiesHtml
     };
 
-    const existingIndex = tasks.findIndex(t => t.id === id);
     if (existingIndex > -1) {
-        // Edit existing
         tasks[existingIndex] = taskData;
     } else {
-        // Create new
         tasks.push(taskData);
     }
 
@@ -396,7 +549,7 @@ function saveTask() {
     }
 }
 
-// Edit handler accessible by global function
+// Edit handler
 window.editTask = function(id) {
     const task = tasks.find(t => t.id === id);
     if (task) {
@@ -431,7 +584,7 @@ function populateMonthFilter() {
     filterMonthYear.innerHTML = '<option value="all">Semua Bulan</option>';
     
     const dates = tasks.map(t => new Date(t.date));
-    const uniqueMonths = []; // format: "MM-YYYY"
+    const uniqueMonths = [];
     
     dates.forEach(d => {
         if (!isNaN(d.getTime())) {
@@ -445,7 +598,6 @@ function populateMonthFilter() {
         }
     });
 
-    // Sort chronologically reverse
     uniqueMonths.sort((a, b) => b.year - a.year || b.month - a.month);
 
     uniqueMonths.forEach(item => {
@@ -465,15 +617,13 @@ function renderTaskList() {
     tasksContainer.innerHTML = '';
 
     const filtered = tasks.filter(task => {
-        // Title or name query match
+        const execsStr = task.executors ? task.executors.map(e => e.name).join(' ') : '';
         const matchesQuery = task.title.toLowerCase().includes(query) ||
-                             task.executor.toLowerCase().includes(query) ||
-                             task.no.toLowerCase().includes(query);
+                             execsStr.toLowerCase().includes(query) ||
+                             (task.no && task.no.toLowerCase().includes(query));
 
-        // Status match
         const matchesStatus = statusVal === 'all' || task.status === statusVal;
 
-        // Month-Year match
         let matchesMonthYear = true;
         if (monthYearVal !== 'all') {
             const [m, y] = monthYearVal.split('-');
@@ -494,15 +644,15 @@ function renderTaskList() {
         return;
     }
 
-    // Sort newest first
     filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
 
     filtered.forEach(task => {
         const card = document.createElement('div');
         card.className = 'task-card';
+        const execNames = task.executors ? task.executors.map(e => e.name).join(', ') : '-';
         card.innerHTML = `
             <div class="task-card-header">
-                <span class="task-no-label">${task.no}</span>
+                <span class="task-no-label">${task.no || '-'}</span>
                 <span class="badge ${task.status === 'selesai' ? 'badge-green' : 'badge-blue'}">
                     ${task.status === 'selesai' ? 'Selesai' : 'Aktif'}
                 </span>
@@ -510,8 +660,8 @@ function renderTaskList() {
             <h3 class="task-card-title">${truncateText(task.title, 60)}</h3>
             <div class="task-card-details">
                 <div class="detail-row">
-                    <i class="fa-solid fa-circle-user"></i>
-                    <span>Pelaksana: <strong>${task.executor}</strong></span>
+                    <i class="fa-solid fa-users"></i>
+                    <span>Pelaksana: <strong>${truncateText(execNames, 40)} (${task.executors ? task.executors.length : 0} Org)</strong></span>
                 </div>
                 <div class="detail-row">
                     <i class="fa-solid fa-user-tie"></i>
@@ -520,10 +670,6 @@ function renderTaskList() {
                 <div class="detail-row">
                     <i class="fa-solid fa-calendar-days"></i>
                     <span>Periode: <span>${formatDateIndo(task.startDate)} s.d ${formatDateIndo(task.endDate)}</span></span>
-                </div>
-                <div class="detail-row">
-                    <i class="fa-solid fa-list-check"></i>
-                    <span>Uraian: <strong>${task.activities ? task.activities.length : 0} kegiatan</strong></span>
                 </div>
             </div>
             <div class="task-card-actions">
@@ -557,6 +703,7 @@ function formatDateIndo(dateStr) {
 
 // Truncate long descriptions
 function truncateText(str, n) {
+    if (!str) return '';
     return (str.length > n) ? str.substr(0, n - 1) + '...' : str;
 }
 
@@ -581,19 +728,34 @@ window.viewSingleTask = function(id) {
 };
 
 function generateSingleTaskHtml(task) {
-    let activitiesRows = '';
-    if (task.activities && task.activities.length > 0) {
-        task.activities.forEach((act, idx) => {
-            activitiesRows += `
+    // Generate list of executors in official table
+    let executorsRows = '';
+    if (task.executors && task.executors.length > 0) {
+        task.executors.forEach((exec, idx) => {
+            executorsRows += `
                 <tr>
-                    <td style="text-align: center;">${idx + 1}</td>
-                    <td>${act.text}</td>
+                    <td style="width: 140px; padding: 4px 0; vertical-align: top;">Nama Pelaksana ${idx + 1}</td>
+                    <td style="width: 15px; padding: 4px 0; text-align: center; vertical-align: top;">:</td>
+                    <td style="padding: 4px 0; vertical-align: top;"><strong>${exec.name}</strong></td>
                 </tr>
+                <tr>
+                    <td style="padding: 4px 0; vertical-align: top; text-indent: 15px;">Peran/Jabatan</td>
+                    <td style="padding: 4px 0; text-align: center; vertical-align: top;">:</td>
+                    <td style="padding: 4px 0; vertical-align: top;">${exec.role || '-'}</td>
+                </tr>
+                ${exec.nip ? `
+                <tr>
+                    <td style="padding: 4px 0; vertical-align: top; text-indent: 15px;">NIP / ID</td>
+                    <td style="padding: 4px 0; text-align: center; vertical-align: top;">:</td>
+                    <td style="padding: 4px 0; vertical-align: top;">${exec.nip}</td>
+                </tr>` : ''}
+                <tr><td colspan="3" style="height: 6px;"></td></tr>
             `;
         });
-    } else {
-        activitiesRows = `<tr><td colspan="2" class="text-center text-muted">Tidak ada rincian kegiatan.</td></tr>`;
     }
+
+    // Uraian Hasil Kegiatan placed in its own block under details (Uraian Kegiatan taruh di bagian baris/seksi sendiri)
+    const activitiesContent = task.activitiesHtml ? task.activitiesHtml : '<p class="text-muted">Belum ada rincian kegiatan yang dilaporkan.</p>';
 
     return `
         <div class="paper-document">
@@ -607,7 +769,7 @@ function generateSingleTaskHtml(task) {
             <!-- Title -->
             <div class="doc-title-box">
                 <div class="doc-title">SURAT TUGAS</div>
-                <div class="doc-number">Nomor: ${task.no}</div>
+                <div class="doc-number">Nomor: ${task.no || '-'}</div>
             </div>
 
             <!-- Paragraph Intro -->
@@ -617,10 +779,10 @@ function generateSingleTaskHtml(task) {
 
             <!-- PIC Info -->
             <div class="doc-party">
-                <table class="party-table">
+                <table class="party-table" style="margin-bottom: 0;">
                     <tr>
-                        <td>Nama</td>
-                        <td>:</td>
+                        <td style="width: 140px;">Nama Pemberi Tugas</td>
+                        <td style="width: 15px; text-align: center;">:</td>
                         <td><strong>${task.pic}</strong></td>
                     </tr>
                     <tr>
@@ -632,24 +794,16 @@ function generateSingleTaskHtml(task) {
             </div>
 
             <!-- Paragraph Transition -->
-            <div class="doc-section">
-                Dengan ini menugaskan kepada pelaksana di bawah ini:
+            <div class="doc-section" style="margin-top: 14px;">
+                Dengan ini menugaskan kepada jajaran pelaksana di bawah ini:
             </div>
 
-            <!-- Executor Info -->
+            <!-- Executors List Info -->
             <div class="doc-party">
                 <table class="party-table">
-                    <tr>
-                        <td>Nama Pelaksana</td>
-                        <td>:</td>
-                        <td><strong>${task.executor}</strong></td>
-                    </tr>
-                    ${task.executorNip ? `
-                    <tr>
-                        <td>NIP / ID</td>
-                        <td>:</td>
-                        <td>${task.executorNip}</td>
-                    </tr>` : ''}
+                    <tbody>
+                        ${executorsRows}
+                    </tbody>
                 </table>
             </div>
 
@@ -658,23 +812,15 @@ function generateSingleTaskHtml(task) {
                 Untuk melaksanakan tugas: <strong>${task.title}</strong> yang terhitung mulai dari tanggal <strong>${formatDateIndo(task.startDate)}</strong> sampai dengan <strong>${formatDateIndo(task.endDate)}</strong>.
             </div>
 
-            <!-- Laporan Kegiatan (Activities List table) -->
-            <div class="doc-section" style="margin-top: 24px;">
-                Adapun laporan rincian kegiatan selama masa pelaksanaan tugas tersebut adalah sebagai berikut:
-                <table class="activities-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 50px;">No</th>
-                            <th>Uraian Deskripsi Kegiatan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${activitiesRows}
-                    </tbody>
-                </table>
+            <!-- Uraian Hasil Kegiatan (Laporan) - TARUH DI BAGIAN BARIS SENDIRI -->
+            <div class="doc-section" style="margin-top: 24px; border-top: 1px solid #111; padding-top: 16px; page-break-inside: avoid;">
+                <h3 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">LAPORAN HASIL PELAKSANAAN KEGIATAN:</h3>
+                <div style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: black; text-align: justify;">
+                    ${activitiesContent}
+                </div>
             </div>
 
-            <div class="doc-section">
+            <div class="doc-section" style="margin-top: 20px;">
                 Demikian surat tugas ini dibuat untuk dilaksanakan dengan penuh tanggung jawab dan digunakan sebagaimana mestinya.
             </div>
 
@@ -684,7 +830,7 @@ function generateSingleTaskHtml(task) {
                     <div class="sig-date">Jakarta, ${formatDateIndo(task.date)}</div>
                     <div class="sig-title">${task.picTitle || 'Pemberi Tugas'}</div>
                     <div class="sig-name">${task.pic}</div>
-                    ${task.executorNip ? '<div class="sig-nip">Pangkat Pembina Utama</div>' : ''}
+                    <div style="font-size: 10pt; margin-top: 2px;">NIP. 19710421 199803 1 001</div>
                 </div>
             </div>
         </div>
@@ -693,7 +839,6 @@ function generateSingleTaskHtml(task) {
 
 // Laporan Tab (Monthly Print compilation logic)
 function setupReportForm() {
-    // Populate Years dynamically
     populateReportYearFilter();
 
     btnGenerateReport.addEventListener('click', () => {
@@ -703,12 +848,9 @@ function setupReportForm() {
 
 function populateReportYearFilter() {
     reportYear.innerHTML = '';
-    
-    // Add current year as option
     const currentYear = new Date().getFullYear();
     const years = [currentYear, currentYear - 1, currentYear + 1];
     
-    // Collect years from tasks
     tasks.forEach(task => {
         const d = new Date(task.date);
         if (!isNaN(d.getTime())) {
@@ -731,7 +873,6 @@ function generateMonthlyReport() {
     const selectedMonth = parseInt(reportMonth.value, 10);
     const selectedYear = parseInt(reportYear.value, 10);
 
-    // Filter tasks that belong to the selected month and year based on date
     const monthlyTasks = tasks.filter(task => {
         const d = new Date(task.date);
         return (d.getMonth() + 1) === selectedMonth && d.getFullYear() === selectedYear;
@@ -749,7 +890,6 @@ function generateMonthlyReport() {
     monthlyReportContent.innerHTML = reportHtml;
     reportPreviewContainer.style.display = 'block';
     
-    // Smooth scroll to preview
     reportPreviewContainer.scrollIntoView({ behavior: 'smooth' });
 
     // Print event
@@ -763,42 +903,39 @@ function compileMonthlyReportHtml(monthlyTasks, month, year) {
     let tableRows = '';
     let counter = 1;
 
-    // Group activities of all filtered tasks
+    // Group activities of all filtered tasks. Uraian Hasil Kegiatan taruh di bagian baris sendiri.
     monthlyTasks.forEach(task => {
-        const rowSpan = task.activities && task.activities.length > 0 ? task.activities.length : 1;
-        
-        // Render first activity row with main task info
-        const firstActivityText = task.activities && task.activities.length > 0 ? task.activities[0].text : 'Belum melaporkan uraian kegiatan.';
-        
+        // Compile executors listing format
+        let execCell = '';
+        if (task.executors && task.executors.length > 0) {
+            task.executors.forEach((e, i) => {
+                execCell += `${i + 1}. ${e.name} <span style="font-size: 0.8rem; color:#444;">(${e.role})${e.nip ? ` - NIP: ${e.nip}` : ''}</span><br>`;
+            });
+        } else {
+            execCell = '-';
+        }
+
+        const activitiesContent = task.activitiesHtml ? task.activitiesHtml : '<em style="color:#666;">Belum melaporkan rincian hasil kegiatan.</em>';
+
+        // Row 1: Task Details
         tableRows += `
             <tr>
-                <td rowspan="${rowSpan}" style="text-align: center; vertical-align: top;">${counter++}</td>
-                <td rowspan="${rowSpan}" style="vertical-align: top;">
-                    <strong>${task.no}</strong><br>
-                    <span style="font-size: 0.85rem; color: #555;">Tgl: ${formatDateIndo(task.date)}</span>
+                <td style="text-align: center; vertical-align: top; font-weight: bold; border-bottom: none !important;">${counter++}</td>
+                <td style="vertical-align: top; font-weight: bold; border-bottom: none !important;">${task.no || '-'}</td>
+                <td style="vertical-align: top; border-bottom: none !important;">${task.title}</td>
+                <td style="vertical-align: top; border-bottom: none !important;">${execCell}</td>
+                <td style="text-align: center; vertical-align: top; border-bottom: none !important; font-size: 9.5pt;">
+                    ${formatDateIndo(task.startDate)}<br>s/d<br>${formatDateIndo(task.endDate)}
                 </td>
-                <td rowspan="${rowSpan}" style="vertical-align: top;">${task.title}</td>
-                <td rowspan="${rowSpan}" style="vertical-align: top;">
-                    <strong>${task.executor}</strong><br>
-                    <span style="font-size: 0.85rem; color: #555;">NIP: ${task.executorNip || '-'}</span>
+            </tr>
+            <!-- Row 2: Uraian Kegiatan (Baris khusus sendiri agar tidak merusak tampilan PDF) -->
+            <tr>
+                <td colspan="5" class="report-detail-row">
+                    <strong>Uraian Hasil Laporan Kegiatan:</strong>
+                    <div>${activitiesContent}</div>
                 </td>
-                <td rowspan="${rowSpan}" style="text-align: center; vertical-align: top;">
-                    <span style="font-size: 0.85rem;">${formatDateIndo(task.startDate)}<br>s/d<br>${formatDateIndo(task.endDate)}</span>
-                </td>
-                <td style="vertical-align: top;">${firstActivityText}</td>
             </tr>
         `;
-
-        // Render remaining activity rows for the same task
-        if (task.activities && task.activities.length > 1) {
-            for (let i = 1; i < task.activities.length; i++) {
-                tableRows += `
-                    <tr>
-                        <td style="vertical-align: top;">${task.activities[i].text}</td>
-                    </tr>
-                `;
-            }
-        }
     });
 
     return `
@@ -813,11 +950,10 @@ function compileMonthlyReportHtml(monthlyTasks, month, year) {
                 <thead>
                     <tr>
                         <th style="width: 40px;">No</th>
-                        <th style="width: 140px;">No. Surat Tugas</th>
-                        <th>Judul/Tugas Mandat</th>
-                        <th style="width: 160px;">Pelaksana</th>
-                        <th style="width: 120px;">Periode Pelaksanaan</th>
-                        <th>Uraian Hasil Kegiatan (Laporan)</th>
+                        <th style="width: 120px;">No. Surat Tugas</th>
+                        <th>Judul / Tugas Mandat</th>
+                        <th>Daftar Pelaksana & Peran</th>
+                        <th style="width: 140px;">Masa Tugas</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -873,14 +1009,31 @@ function setupBackupRestore() {
             try {
                 const importedData = JSON.parse(evt.target.result);
                 
-                // Simple validation
                 if (Array.isArray(importedData)) {
                     if (confirm(`Apakah Anda yakin ingin memulihkan cadangan? Ini akan menggantikan ${tasks.length} data saat ini dengan ${importedData.length} data cadangan.`)) {
                         tasks = importedData;
+                        
+                        // Migration checking for imported files too
+                        tasks.forEach(t => {
+                            if (t.executor) {
+                                t.executors = [{ name: t.executor, role: "Pelaksana", nip: t.executorNip || "" }];
+                                delete t.executor;
+                                delete t.executorNip;
+                            }
+                            if (t.activities && !t.activitiesHtml) {
+                                let html = "<ul>";
+                                t.activities.forEach(act => {
+                                    html += `<li>${act.text}</li>`;
+                                });
+                                html += "</ul>";
+                                t.activitiesHtml = html;
+                                delete t.activities;
+                            }
+                        });
+
                         saveToStorage();
                         alert("Data cadangan berhasil dipulihkan!");
                         
-                        // Force refresh stats
                         updateDashboardStats();
                         updateStorageInfo();
                     }
@@ -893,7 +1046,6 @@ function setupBackupRestore() {
             }
         };
         reader.readAsText(file);
-        // Reset file input value
         importFileInput.value = '';
     });
 

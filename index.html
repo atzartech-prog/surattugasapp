@@ -292,16 +292,10 @@
             <form id="task-form">
                 <input type="hidden" id="task-id">
                 <div class="modal-body">
-                    <!-- Basic Info Row -->
-                    <div class="form-row">
-                        <div class="form-group flex-1">
-                            <label for="task-no" class="required">Nomor Surat Tugas</label>
-                            <input type="text" id="task-no" required placeholder="Contoh: 800/123/DISDIK/2026">
-                        </div>
-                        <div class="form-group flex-1">
-                            <label for="task-date" class="required">Tanggal Surat Tugas</label>
-                            <input type="date" id="task-date" required>
-                        </div>
+                    <!-- Date Info Row (No manual number input, automatic) -->
+                    <div class="form-group">
+                        <label for="task-date" class="required">Tanggal Surat Tugas</label>
+                        <input type="date" id="task-date" required>
                     </div>
 
                     <!-- Judul Tugas -->
@@ -310,7 +304,7 @@
                         <input type="text" id="task-title" required placeholder="Contoh: Pendampingan Akreditasi Sekolah">
                     </div>
 
-                    <!-- PIC & Pelaksana Row -->
+                    <!-- PIC Info Row -->
                     <div class="form-row">
                         <div class="form-group flex-1">
                             <label for="task-pic" class="required">Nama PIC (Pemberi Tugas)</label>
@@ -322,14 +316,31 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group flex-1">
-                            <label for="task-executor" class="required">Nama Pelaksana Tugas</label>
-                            <input type="text" id="task-executor" required placeholder="Contoh: Budi Santoso, S.Kom.">
+                    <!-- Multiple Executors (Nama pelaksana tugas ada banyak, bisa input banyak orang dengan peran yang berbeda) -->
+                    <div class="form-group">
+                        <div class="label-with-action">
+                            <label class="required">Pelaksana Tugas & Peran</label>
+                            <div class="button-group">
+                                <button type="button" class="btn-text btn-sm" id="btn-copy-executors" style="margin-right: 12px;">
+                                    <i class="fa-solid fa-copy"></i> Salin dari ST Lain
+                                </button>
+                                <button type="button" class="btn-text btn-sm" id="btn-add-executor-row">
+                                    <i class="fa-solid fa-plus-circle"></i> Tambah Pelaksana
+                                </button>
+                            </div>
                         </div>
-                        <div class="form-group flex-1">
-                            <label for="task-executor-nip">NIP / ID Pelaksana (Opsional)</label>
-                            <input type="text" id="task-executor-nip" placeholder="Contoh: 19881023 201504 1 002">
+                        <!-- Dropdown list to copy executors, hidden by default -->
+                        <div id="copy-executors-wrapper" style="display: none; margin-bottom: 12px; background-color: var(--bg-input); padding: 10px; border-radius: var(--border-radius-md); border: 1px dashed var(--border-color);">
+                            <label for="select-copy-source" style="font-size: 0.8rem; margin-bottom: 4px; display: block; color: var(--text-secondary);">Pilih Surat Tugas Sumber:</label>
+                            <div style="display: flex; gap: 8px;">
+                                <select id="select-copy-source" class="form-control" style="flex-grow: 1; padding: 6px 12px; font-size: 0.85rem;">
+                                    <option value="">-- Pilih Surat Tugas --</option>
+                                </select>
+                                <button type="button" class="btn btn-outline btn-sm" id="btn-execute-copy">Salin</button>
+                            </div>
+                        </div>
+                        <div class="executors-input-list" id="executors-list-container">
+                            <!-- Dynamic rows of executor inputs will go here -->
                         </div>
                     </div>
 
@@ -354,17 +365,20 @@
                         </select>
                     </div>
 
-                    <!-- Uraian Kegiatan (Laporan) -->
+                    <!-- Rich Editor for Activities (Uraian Kegiatan) -->
                     <div class="form-group">
-                        <div class="label-with-action">
-                            <label>Uraian Kegiatan (Untuk Laporan)</label>
-                            <button type="button" class="btn-text" id="btn-add-activity-row">
-                                <i class="fa-solid fa-plus-circle"></i> Tambah Baris Kegiatan
-                            </button>
+                        <label>Uraian Hasil Kegiatan (Laporan)</label>
+                        <div class="rich-editor-toolbar">
+                            <button type="button" class="editor-btn" data-cmd="bold" title="Tebal (Bold)"><i class="fa-solid fa-bold"></i></button>
+                            <button type="button" class="editor-btn" data-cmd="italic" title="Miring (Italic)"><i class="fa-solid fa-italic"></i></button>
+                            <button type="button" class="editor-btn" data-cmd="underline" title="Garis Bawah (Underline)"><i class="fa-solid fa-underline"></i></button>
+                            <button type="button" class="editor-btn" data-cmd="insertHTML" data-val="<h1>Judul 1</h1>" title="Header 1">H1</button>
+                            <button type="button" class="editor-btn" data-cmd="insertHTML" data-val="<h2>Judul 2</h2>" title="Header 2">H2</button>
+                            <button type="button" class="editor-btn" data-cmd="insertUnorderedList" title="Daftar Bulatan"><i class="fa-solid fa-list-ul"></i></button>
+                            <button type="button" class="editor-btn" data-cmd="insertOrderedList" title="Daftar Angka"><i class="fa-solid fa-list-ol"></i></button>
+                            <button type="button" class="editor-btn" data-cmd="removeFormat" title="Hapus Format"><i class="fa-solid fa-remove-format"></i></button>
                         </div>
-                        <div class="activities-input-list" id="activities-list-container">
-                            <!-- Dynamic rows of activity inputs will go here -->
-                        </div>
+                        <div class="rich-editor-content" id="task-activities-editor" contenteditable="true" placeholder="Tuliskan uraian hasil kegiatan laporan di sini..."></div>
                     </div>
                 </div>
                 <div class="modal-footer">
